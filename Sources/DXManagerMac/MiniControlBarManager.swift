@@ -68,9 +68,15 @@ private struct CompactSessionControls: View {
     let capture: () -> Void; let setVolume: (Int) -> Void; let back: () -> Void; let home: () -> Void; let recents: () -> Void; let power: () -> Void; let stop: () -> Void
     init(initialVolume: Int, showsPhoneNavigation: Bool, protectedScreen: Bool, capture: @escaping () -> Void, setVolume: @escaping (Int) -> Void, back: @escaping () -> Void, home: @escaping () -> Void, recents: @escaping () -> Void, power: @escaping () -> Void, stop: @escaping () -> Void) { _volume = State(initialValue: Double(initialVolume)); self.showsPhoneNavigation = showsPhoneNavigation; self.protectedScreen = protectedScreen; self.capture = capture; self.setVolume = setVolume; self.back = back; self.home = home; self.recents = recents; self.power = power; self.stop = stop }
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            fullControlRow
-            compactControlRow
+        GeometryReader { geometry in
+            Group {
+                if geometry.size.width >= 430 {
+                    fullControlRow
+                } else {
+                    compactControlRow
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
