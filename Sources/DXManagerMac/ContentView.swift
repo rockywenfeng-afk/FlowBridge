@@ -916,14 +916,9 @@ private struct DiagnosticsView: View {
                     Spacer(); Button("로그 저장", action: model.saveLog).buttonStyle(.borderedProminent)
                 }
             }
-            Card("화면 복구 도구", icon: "cross.case") {
-                Text("비정상 종료 후 Galaxy에 남은 데스크톱 가상 화면을 안전하게 복구합니다.").foregroundStyle(.secondary)
-                HStack {
-                    Button("설치·업데이트", action: model.installCompanion).buttonStyle(.borderedProminent)
-                    Button("복구 권한 부여", action: model.grantCompanionPermission)
-                    Spacer(); Button("삭제", role: .destructive, action: model.uninstallCompanion)
-                }
-                Text("번들 공식 v2.0.0 APK의 SHA-256을 설치 전후에 검증합니다.").font(.caption).foregroundStyle(.secondary)
+            Card("화면 복구", icon: "cross.case") {
+                Text("Monterey 版本不附带 Android APK。正常结束 DeX 会通过 ADB 清理虚拟显示；如果异常断开，请在 Galaxy 开发者选项中关闭模拟辅助显示。")
+                    .foregroundStyle(.secondary)
             }
         }
     }
