@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Darwin
 import CryptoKit
 import ServiceManagement
 import UserNotifications
@@ -78,6 +79,7 @@ final class AppModel: ObservableObject {
     private var controller: DXSessionController?
     private let transferQueue = TransferQueue()
     private let miniBars = MiniControlBarManager()
+    private let menuBarController = MenuBarController()
     private let keyboardCorrection = KeyboardCorrectionService()
     private var logLines: [String] = []
     private var lastActivity = Date()
@@ -100,7 +102,7 @@ final class AppModel: ObservableObject {
     init() {
         load()
         autoHideMinutes = appSettings.autoHideMinutes
-        launchAtLogin = SMAppService.mainApp.status == .enabled
+        launchAtLogin = Self.isLaunchAtLoginEnabled()
         presenceMode = appSettings.presenceMode
         openMainWindowAtLaunch = appSettings.openMainWindowAtLaunch
         appLaunchMode = appSettings.appLaunchMode
@@ -962,6 +964,7 @@ final class AppModel: ObservableObject {
 
     private func applyPresenceMode() {
         NSApplication.shared.setActivationPolicy(presenceMode == .menuBarOnly ? .accessory : .regular)
+        menuBarController.configure(model: self, visible: showsMenuBarIcon)
     }
 
     func toggleKeyboardCorrection() {
@@ -982,10 +985,79 @@ final class AppModel: ObservableObject {
 
     func toggleLaunchAtLogin() {
         do {
-            if launchAtLogin { try SMAppService.mainApp.unregister(); launchAtLogin = false }
-            else { try SMAppService.mainApp.register(); launchAtLogin = true }
+            if #available(macOS 13.0, *) {
+                if launchAtLogin { try SMAppService.mainApp.unregister() }
+                else { try SMAppService.mainApp.register() }
+            } else {
+                try setLegacyLaunchAtLogin(!launchAtLogin)
+            }
+            launchAtLogin = Self.isLaunchAtLoginEnabled()
             status = launchAtLogin ? "로그인 자동 실행을 켰습니다." : "로그인 자동 실행을 껐습니다."
         } catch { status = "로그인 자동 실행 변경 실패: \(error.localizedDescription)" }
+    }
+
+    private static var legacyLaunchAgentURL: URL {
+        URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/LaunchAgents/io.github.catgarret.flowbridge.plist")
+    }
+
+    private static func isLaunchAtLoginEnabled() -> Bool {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        }
+        return FileManager.default.fileExists(atPath: legacyLaunchAgentURL.path)
+    }
+
+    private func setLegacyLaunchAtLogin(_ enabled: Bool) throws {
+        let url = Self.legacyLaunchAgentURL
+        let domain = "gui/\(getuid())"
+        if enabled {
+            guard let executable = Bundle.main.executableURL?.path else {
+                throw DXError.commandFailed("앱 실행 파일 경로를 확인할 수 없습니다.")
+            }
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            let configuration: [String: Any] = [
+                "Label": "io.github.catgarret.flowbridge",
+                "ProgramArguments": [executable],
+                "RunAtLoad": true,
+                "KeepAlive": false
+            ]
+            let data = try PropertyListSerialization.data(
+                fromPropertyList: configuration,
+                format: .xml,
+                options: 0
+            )
+            try data.write(to: url, options: .atomic)
+            do {
+                try Self.runLaunchctl(["bootstrap", domain, url.path])
+            } catch {
+                try? FileManager.default.removeItem(at: url)
+                throw error
+            }
+        } else {
+            try? Self.runLaunchctl(["bootout", domain, url.path])
+            if FileManager.default.fileExists(atPath: url.path) {
+                try FileManager.default.removeItem(at: url)
+            }
+        }
+    }
+
+    private static func runLaunchctl(_ arguments: [String]) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+        process.arguments = arguments
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            throw NSError(
+                domain: "FlowBridge.LoginItem",
+                code: Int(process.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: "launchctl 命令执行失败（状态 \(process.terminationStatus)）。"]
+            )
+        }
     }
 
     func checkForUpdates() {
