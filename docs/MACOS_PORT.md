@@ -8,8 +8,7 @@ virtual display.
 
 ## Requirements
 
-- macOS 13 or later (Apple silicon and Intel are both Swift targets; Apple
-  silicon is the currently compiled environment)
+- Monterey compatibility branch: macOS 12.0 or later on Intel x86_64 (CI build pending; not yet device-tested)
 - A Samsung Galaxy device that supports DeX
 - USB debugging enabled and authorized
 - No separately installed runtime dependency. The packaged app contains the
@@ -74,3 +73,39 @@ notarization require the repository owner's private Apple signing identity.
 화면 어둡게 옵션은 실제 디스플레이 전원을 끄지 않고 밝기 최저와 Galaxy
 더 어둡게(Extra dim)를 적용해 미러링 연결을 유지하며, 세션 종료 시 기존 상태를
 복원합니다.
+
+
+## Monterey Intel fork (experimental)
+
+The `feature/macos-monterey` branch targets macOS 12.0 on Intel Macs. It
+replaces macOS 13-only SwiftUI navigation, menu bar, settings grid and compact
+control layout APIs with Monterey-compatible alternatives, and uses an AppKit
+status item. Login launch uses a per-user LaunchAgent on Monterey and
+`SMAppService` on macOS 13 and later.
+
+The Monterey packaging script bundles the upstream pinned Intel scrcpy 4.1
+archive with its ADB binary and does **not** include or install DX Companion.
+Phone mirroring, DeX, and ADB file transfers are independent of that APK;
+abnormal termination cannot rely on the companion guardian to clean up virtual
+displays. The phone-side Android compatibility and scrcpy runtime still need
+testing on a real Intel Monterey Mac and Galaxy device.
+
+To build from this branch, run `sh scripts/package-macos.sh` on a Mac with
+Xcode and Swift installed. The workflow
+`.github/workflows/monterey-intel.yml` builds and checks an Intel ZIP artifact
+on a hosted Intel macOS runner. GitHub Actions artifacts are **test builds**,
+not Apple-notarized releases. The archive is available on the corresponding
+Actions run after a successful build.
+
+Do not install DX Companion for this fork. If DeX leaves an orphaned simulated
+secondary display after an abnormal exit, use Galaxy Developer options to
+toggle **Simulate secondary displays** to an option and then **None**.
+
+## Monterey Intel 说明
+
+`feature/macos-monterey` 分支面向 Intel Mac 和 macOS 12 Monterey。
+本分支替换了 macOS 13 专用的菜单栏、导航、设置网格和浮动控制布局；
+打包只包含 Intel 版 ADB/scrcpy，不包含 DX Companion APK。
+
+请在 GitHub Actions 中下载构建成功后的 ZIP；这是未经过 Apple 公证的
+测试版本。仍需要在真实 Intel Monterey Mac 和 Galaxy 手机上验证。
