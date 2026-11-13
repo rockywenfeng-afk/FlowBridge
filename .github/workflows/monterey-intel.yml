@@ -1,0 +1,58 @@
+name: Build FlowBridge Monterey Intel
+
+on:
+  push:
+    branches:
+      - feature/macos-monterey
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monterey-intel:
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Swift and runner
+        run: |
+          sw_vers
+          uname -m
+          xcodebuild -version
+          swift --version
+
+      - name: Build macOS 12 x86_64 executable
+        run: |
+          swift build -c release --arch x86_64
+
+      - name: Run core regression checks
+        run: |
+          swift run -c release --arch x86_64 DXManagerCoreTests
+
+      - name: Package standalone Intel app
+        run: |
+          sh scripts/package-macos.sh
+
+      - name: Check deployment target and bundled runtime
+        run: |
+          set -eu
+          APP="dist/Flow Bridge.app"
+          test -x "$APP/Contents/MacOS/DXManagerMac"
+          test -x "$APP/Contents/Resources/runtime/x86_64/adb"
+          test -x "$APP/Contents/Resources/runtime/x86_64/scrcpy"
+          test ! -e "$APP/Contents/Resources/companion"
+          /usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist" | grep -x 12.0
+          file "$APP/Contents/MacOS/DXManagerMac"
+          xcrun vtool -show-build "$APP/Contents/MacOS/DXManagerMac"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+      - name: Upload Monterey Intel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlowBridge-Monterey-Intel
+          path: dist/FlowBridge-Monterey-Intel-v*.zip
+          if-no-files-found: error
+          retention-days: 30
