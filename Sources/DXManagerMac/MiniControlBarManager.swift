@@ -111,10 +111,10 @@ private struct CompactSessionControls: View {
             Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill").foregroundStyle(.secondary).frame(width: 24)
             Slider(value: $volume, in: 0...15, step: 1).frame(minWidth: 54, maxWidth: 100).onChange(of: volume) { setVolume(Int($0)) }
             Menu {
-                Button("Galaxy 전원", systemImage: "power", action: power)
-                Button("화면 캡처", systemImage: "camera", action: capture)
+                Button(action: power) { Label("Galaxy 전원", systemImage: "power") }
+                Button(action: capture) { Label("화면 캡처", systemImage: "camera") }
                 Divider()
-                Button("화면 종료", systemImage: "xmark.circle", role: .destructive, action: stop)
+                Button(role: .destructive, action: stop) { Label("화면 종료", systemImage: "xmark.circle") }
             } label: { Image(systemName: "ellipsis").frame(width: 30, height: 28) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).help("더보기")
         }
