@@ -1,3 +1,5 @@
+> **Monterey Intel experimental fork:** The `feature/macos-monterey` branch targets macOS 12 on Intel Macs. The original `main` branch still targets macOS 13+. See [Monterey build instructions](docs/MACOS_PORT.md). This branch's test package excludes DX Companion APK. Real-device compatibility is not yet verified.
+
 <p align="center">
   <img src="macOS/AppIcon.svg" width="112" alt="Flow Bridge icon">
 </p>
