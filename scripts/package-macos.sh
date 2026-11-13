@@ -42,6 +42,8 @@ tar -xzf "$INTEL_ARCHIVE" --strip-components=1 -C "$APP/Contents/Resources/runti
 chmod +x "$APP/Contents/Resources/runtime/x86_64/adb" "$APP/Contents/Resources/runtime/x86_64/scrcpy"
 codesign --force --deep --sign - "$APP"
 rm -f "$ROOT/dist/FlowBridge-Monterey-Intel-v$APP_VERSION.zip"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ROOT/dist/FlowBridge-macOS-universal-v$APP_VERSION.zip"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ROOT/dist/FlowBridge-Monterey-Intel-v$APP_VERSION.zip"
+rm -f "$ROOT/dist/FlowBridge-Monterey-Intel-v$APP_VERSION.dmg"
+hdiutil create -volname "Flow Bridge Monterey" -srcfolder "$APP" -ov -format UDZO "$ROOT/dist/FlowBridge-Monterey-Intel-v$APP_VERSION.dmg"
 echo "$APP"
 
