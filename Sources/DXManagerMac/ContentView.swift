@@ -874,10 +874,10 @@ private struct SettingsView: View {
                     Divider()
                     Button { withAnimation(.easeInOut(duration: 0.18)) { showsExpertSettings.toggle() } } label: { HStack { Text("전문가 수동 설정").fontWeight(.medium); Spacer(); Image(systemName: "chevron.right").rotationEffect(.degrees(showsExpertSettings ? 90 : 0)).foregroundStyle(.secondary) }.padding(.vertical, 13).contentShape(Rectangle()) }.buttonStyle(.plain)
                     if showsExpertSettings {
-                        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
-                            GridRow { Text("해상도"); HStack { NumberField(value: $model.settings.width, label: "너비"); Text("×"); NumberField(value: $model.settings.height, label: "높이") } }
-                            GridRow { Text("화면 밀도"); NumberField(value: $model.settings.dpi, label: "DPI") }
-                            GridRow { Text("비트레이트"); NumberField(value: $model.settings.bitrate, label: "Mbps") }
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 16) { Text("해상도").frame(width: 90, alignment: .leading); NumberField(value: $model.settings.width, label: "너비"); Text("×"); NumberField(value: $model.settings.height, label: "높이") }
+                            HStack(spacing: 16) { Text("화면 밀도").frame(width: 90, alignment: .leading); NumberField(value: $model.settings.dpi, label: "DPI") }
+                            HStack(spacing: 16) { Text("비트레이트").frame(width: 90, alignment: .leading); NumberField(value: $model.settings.bitrate, label: "Mbps") }
                         }.padding(.vertical, 10)
                     }
                 }
