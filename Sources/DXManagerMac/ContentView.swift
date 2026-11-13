@@ -508,7 +508,7 @@ private struct PhoneView: View {
                     }
                     .padding(.vertical, 11)
                     .listRowBackground(Color.clear)
-                    .listRowSeparatorTint(Color.primary.opacity(0.10))
+                    
                     .id(call.id)
                 }
                 .listStyle(.plain)
@@ -590,9 +590,9 @@ private struct PhoneView: View {
             }
             Divider()
             HStack(alignment: .bottom, spacing: 10) {
-                TextField("문자 메시지 · SMS", text: $model.messageBody, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .lineLimit(1...5)
+                TextEditor(text: $model.messageBody)
+                    .font(.body)
+                    .frame(minHeight: 36, maxHeight: 100)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
