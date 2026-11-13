@@ -28,16 +28,23 @@ struct ContentView: View {
     @State private var lastRefreshDates: [AppSection: Date] = [:]
 
     var body: some View {
-        NavigationSplitView {
-            List(AppSection.allCases, selection: $section) { item in
-                Label(localized(item.rawValue), systemImage: item.icon).tag(item)
-            }
-            .navigationTitle("Flow Bridge")
-            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 220)
-            .safeAreaInset(edge: .bottom) {
+        HStack(spacing: 0) {
+            VStack(spacing: 0) {
+                Text("Flow Bridge")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                List(AppSection.allCases, selection: $section) { item in
+                    Label(localized(item.rawValue), systemImage: item.icon).tag(item)
+                }
+                .listStyle(.sidebar)
+                Divider()
                 SidebarDeviceControls()
             }
-        } detail: {
+            .frame(width: 190)
+            .background(Color(nsColor: .controlBackgroundColor))
+            Divider()
             VStack(spacing: 0) {
                 if section == .phone {
                     VStack(alignment: .leading, spacing: 16) { pageHeader; PhoneView() }
@@ -60,7 +67,8 @@ struct ContentView: View {
                     }
                 }
                 statusBar
-            }.background(Color(nsColor: .windowBackgroundColor))
+            }
+            .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 980, minHeight: 680)
         .controlSize(.regular)
@@ -135,7 +143,7 @@ struct ContentView: View {
                 .disabled(model.isBusy || refreshNeedsDevice && !hasConnectedDevice)
                 .help(refreshNeedsDevice && !hasConnectedDevice ? "Galaxy를 연결하면 새 정보를 불러올 수 있습니다." : "현재 화면 새로고침")
             }
-        }.padding(.horizontal, 16).frame(height: 38).background(.bar).overlay(alignment: .top) { Divider() }
+        }.padding(.horizontal, 16).frame(height: 38).background(Color(nsColor: .controlBackgroundColor)).overlay(alignment: .top) { Divider() }
     }
 
     private func refreshLabel(at now: Date) -> String {
@@ -354,7 +362,7 @@ private struct AppPickerSheet: View {
             HStack(spacing: 10) { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.plain) }.padding(.horizontal, 13).frame(height: 38).background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9)).padding(.horizontal, 22).padding(.vertical, 14)
             let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
             let grouped = Dictionary(grouping: Array(matches.prefix(300))) { indexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
-            List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in appRow(app) } } } }.listStyle(.inset).scrollContentBackground(.hidden)
+            List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in appRow(app) } } } }.listStyle(.inset)
             Divider(); HStack { Text(targetSlot == nil ? "1·2·3으로 바로 실행 지정" : "바로 실행 \((targetSlot ?? 0) + 1)에 지정").font(.caption).foregroundStyle(.secondary); Spacer(); Text("\(matches.count)개 앱").font(.caption).foregroundStyle(.secondary) }.padding(.horizontal, 22).padding(.vertical, 13)
         }.frame(width: 640, height: 520)
     }
@@ -457,14 +465,14 @@ private struct PhoneView: View {
         let filtered = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || contactName($0.number).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(100)) { call in
             HStack(spacing: 14) { ContactAvatar(name: contactName(call.number), photoURL: contactPhoto(call.number)); VStack(alignment: .leading, spacing: 7) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 5) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary).help(exactDate(call.date)) }.padding(.vertical, 12).contentShape(Rectangle()).onTapGesture { select(call.number, rowID: call.id) }.listRowBackground(selectedRowID == call.id ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
+        }.listStyle(.plain).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var contactList: some View {
         let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         let grouped = Dictionary(grouping: Array(filtered.prefix(200))) { contactIndexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
         return List { ForEach(grouped, id: \.key) { letter, contacts in Section(letter) { ForEach(contacts) { contact in HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear) } } } }
-            .listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
+            .listStyle(.plain).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var messageThreadList: some View {
@@ -472,7 +480,7 @@ private struct PhoneView: View {
         let filtered = latest.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) || contactName($0.address).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered) { message in
             HStack(spacing: 12) { ContactAvatar(name: contactName(message.address), photoURL: contactPhoto(message.address)); VStack(alignment: .leading, spacing: 5) { HStack { Text(contactName(message.address)).fontWeight(.medium).lineLimit(1); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary).help(exactDate(message.date)) }; Text(message.body.replacingOccurrences(of: "\n", with: " ")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary) } }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(message.address, rowID: message.address) }.listRowBackground(selectedRowID == message.address ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
+        }.listStyle(.plain).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var emptyDetail: some View {
@@ -504,7 +512,7 @@ private struct PhoneView: View {
                     .id(call.id)
                 }
                 .listStyle(.plain)
-                .scrollContentBackground(.hidden)
+                
                 .background(Color.clear)
                 .task(id: "\(selectedNumber)|\(calls.first?.id ?? "")|\(calls.count)") {
                     try? await Task.sleep(nanoseconds: 80_000_000)
@@ -716,7 +724,7 @@ private struct TransferView: View {
                                 }
                                 if selectedRemote.contains(file) { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
                             }.padding(.vertical, 7).tag(file)
-                        }.listStyle(.plain).scrollContentBackground(.hidden).frame(minHeight: 260)
+                        }.listStyle(.plain).frame(minHeight: 260)
                     }
                     Divider()
                     HStack {
