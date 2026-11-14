@@ -3,7 +3,6 @@ import Darwin
 import Foundation
 
 private var failures = 0
-@MainActor
 private func check(_ condition: @autoclosure () -> Bool, _ message: String) {
     if !condition() { failures += 1; print("FAIL: \(message)") }
 }
